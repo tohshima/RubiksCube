@@ -31,6 +31,11 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
+        const numRotation = 20;
+        const rotationTimeInMS = 16;
+        var inRotation = false;
+        let keylog = new Array();
+
         const controls = new OrbitControls(camera, renderer.domElement);
 
         const cubeSize = 1;
@@ -112,23 +117,98 @@
             updateDebugInfo(`Rotated ${rotatedCount} cubelets. Axis: ${axisName}. Layer: ${layer}.`);
         }
 
+        function rotateFuncCall(func, sequenceNum, key, clearRotaionFlag) {
+            inRotation = true;
+            for (let i = 0; i < numRotation; i++) {
+                window.setTimeout( func, i*rotationTimeInMS+sequenceNum*numRotation*rotationTimeInMS );
+            }
+            if (clearRotaionFlag) {
+                window.setTimeout( function() {inRotation=false;}, 1+(numRotation-1)*rotationTimeInMS );
+                keylog.push(key);
+            }
+        }
+
+        function doReversePlay() {
+            const numReverse = keylog.length;
+            for (let i = 0; i < numReverse; i++) {
+                let key = keylog.pop();
+                if (key.toUpperCase() == key) {
+                    rotateByKey(key.toLowerCase(), i, false);
+                } else {
+                    rotateByKey(key.toUpperCase(), i, false);
+                }
+            }
+            window.setTimeout( function() {inRotation=false;}, 1+(numRotation-1)*rotationTimeInMS +numReverse*numRotation*rotationTimeInMS);
+        }
+
+        function rotateByKey(key, sequenceNum, clearRotationFlag) {
+            const angle = Math.PI /2 / numRotation; // 90/numRotation度回転
+            updateDebugInfo(`Key pressed: ${event.key}`);
+            switch(key) {
+                case 'f': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 0, 1), 1, angle) }, sequenceNum, key, clearRotationFlag);
+                    break;  // 前面時計回り
+                case 'F': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 0, 1), 1, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 前面反時計回り
+                case 'b': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 0, 1), -1, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 背面時計回り
+                case 'B': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 0, 1), -1, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 背面反時計回り
+                case 's': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 0, 1), 0, angle) }, sequenceNum, key, clearRotationFlag);
+                    break;  // 前面時計回り
+                case 'S': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 0, 1), 0, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 前面反時計回り
+                case 'u': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 1, 0), 1, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 上面時計回り
+                case 'U': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 1, 0), 1, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break;  // 上面反時計回り
+                case 'd': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 1, 0), -1, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 下面時計回り
+                case 'D': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 1, 0), -1, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 下面反時計回り
+                case 'e': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 1, 0), 0, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 下面時計回り
+                case 'E': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(0, 1, 0), 0, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 下面反時計回り
+                case 'r': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(1, 0, 0), 1, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 右面時計回り
+                case 'R': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(1, 0, 0), 1, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break;  // 右面反時計回り
+                case 'l': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(1, 0, 0), -1, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 左面時計回り
+                case 'L': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(1, 0, 0), -1, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 左面反時計回り
+                case 'm': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(1, 0, 0), 0, -angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 左面時計回り
+                case 'M': 
+                    rotateFuncCall(function() { rotateFace(new THREE.Vector3(1, 0, 0), 0, angle) }, sequenceNum, key, clearRotationFlag); 
+                    break; // 左面時計回り
+                case 'c': // 逆再生モード
+                    doReversePlay();
+                    break;
+            }
+        }
+
         // キーボード操作
         document.addEventListener('keydown', (event) => {
-            const angle = Math.PI / 2; // 90度回転
-            updateDebugInfo(`Key pressed: ${event.key}`);
-            switch(event.key) {
-                case 'f': rotateFace(new THREE.Vector3(0, 0, 1), 1, angle); break;  // 前面時計回り
-                case 'F': rotateFace(new THREE.Vector3(0, 0, 1), 1, -angle); break; // 前面反時計回り
-                case 'b': rotateFace(new THREE.Vector3(0, 0, 1), -1, -angle); break; // 背面時計回り
-                case 'B': rotateFace(new THREE.Vector3(0, 0, 1), -1, angle); break; // 背面反時計回り
-                case 'u': rotateFace(new THREE.Vector3(0, 1, 0), 1, -angle); break; // 上面時計回り
-                case 'U': rotateFace(new THREE.Vector3(0, 1, 0), 1, angle); break;  // 上面反時計回り
-                case 'd': rotateFace(new THREE.Vector3(0, 1, 0), -1, angle); break; // 下面時計回り
-                case 'D': rotateFace(new THREE.Vector3(0, 1, 0), -1, -angle); break; // 下面反時計回り
-                case 'r': rotateFace(new THREE.Vector3(1, 0, 0), 1, -angle); break; // 右面時計回り
-                case 'R': rotateFace(new THREE.Vector3(1, 0, 0), 1, angle); break;  // 右面反時計回り
-                case 'l': rotateFace(new THREE.Vector3(1, 0, 0), -1, angle); break; // 左面時計回り
-                case 'L': rotateFace(new THREE.Vector3(1, 0, 0), -1, -angle); break; // 左面反時計回り
+            if (!inRotation) {
+                rotateByKey(event.key, 0, true);
             }
         });
 
